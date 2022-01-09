@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { StyleSheet, Text, View, FlatList, Image, ScrollView, Linking } from "react-native";
 import { ListItem, SearchBar } from "react-native-elements";
+import { getNews } from '../src/news';
 
 const list = [
     {
@@ -54,8 +55,37 @@ class NewsList extends Component {
             data: list,
             error: null,
             searchValue: "",
+            articles: [],
+            refreshing: true
         };
         this.arrayholder = list;
+        this.fetchNews = this.fetchNews.bind(this);
+    }
+
+    componentDidMount() {
+        this.fetchNews();
+
+    }
+
+
+    fetchNews() {
+        console.log('xxx');
+        getNews()
+            .then(articles => this.setState({ articles, refreshing: false }))
+            .catch((e) => {
+                console.log('yyy' + e);
+                this.setState({ refreshing: false });
+
+            });
+    }
+
+    handleRefresh() {
+        this.setState(
+            {
+                refreshing: true
+            },
+            () => this.fetchNews()
+        );
     }
 
     searchFunction = (text) => {
@@ -78,16 +108,19 @@ class NewsList extends Component {
                     onChangeText={(text) => this.searchFunction(text)}
                     autoCorrect={false}
                 />
+               
 
                 <ScrollView>
                     {
-                        this.state.data.map((l, i) => (
+                        this.state.articles.map((l, i) => (
                             <ListItem
                                 key={i}
-                                leftAvatar={{ source: { uri: l.avatar_url } }}
-                                title={l.name}
+                                leftAvatar={{ source: { uri: l.urlToImage } }}
+                                title={l.title}
                                 titleStyle={styles.item}
-                                onPress={() => { Linking.openURL(l.link); console.log(this.state.articles) }}
+                                onPress={() => { Linking.openURL(l.url); }}
+                                refreshing={this.state.refreshing}
+                                onRefresh={this.handleRefresh.bind(this)}
                             />
                         ))
                     }
@@ -111,3 +144,4 @@ const styles = StyleSheet.create({
         paddingLeft: 10
     }
 });
+
